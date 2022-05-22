@@ -23,6 +23,8 @@ GPIO.setup(sclk, GPIO.OUT)
 GPIO.setup(mosi, GPIO.IN)
 GPIO.setup(miso, GPIO.OUT)
 
+leds_state = 0
+
 # Initialize the spi
 try:
     spi = spidev.SpiDev()
