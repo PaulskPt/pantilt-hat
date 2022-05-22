@@ -169,12 +169,5 @@ def spi_rx():
                 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=9595, debug=True)
-    try:
-        while True:
-            val = readAdc(0)
-            print("ADC Result: ", str(val))
-            time.sleep(5)
-    except KeyboardInterrupt:
-        spi.close() 
-        sys.exit(0)
+ 
 
