@@ -57,6 +57,67 @@ app = Flask(__name__)
 def home():
     return render_template('gui.html')
 
+
+@app.route('/api/<direction>/<int:angle>')
+def api(direction, angle):
+    if angle < 0 or angle > 180:
+        return "{'error':'out of range'}"
+
+    angle -= 90
+
+    if direction == 'pan':
+        pantilthat.pan(angle)
+        return "{{'pan':{}}}".format(angle)
+
+    elif direction == 'tilt':
+        pantilthat.tilt(angle)
+        return "{{'tilt':{}}}".format(angle)
+
+
+"""
+   Function added by @Paulskpt to facilitate the 
+   control of the 8 LED RGBW strip
+   If the middle button of the Adafruit ANO rotary encoder is pressed,
+   or the 'Leds' (middle) button on the webinterface is pressed,
+   all leds will switch ON (white color) or off (toggle function).
+"""
+@app.route('/leds_setall/<int:rgbw>')
+def leds_setall(rgbw):
+    global leds_state
+    pantilthat.light_mode(pantilthat.WS2812)
+    pantilthat.light_type(pantilthat.GRBW)
+    
+    if rgbw is None:
+        if leds_state == 0:
+            red = 0
+            green = 0
+            blue = 0
+            white = 255
+    elif isinstance(rgbw, int):
+        if leds_state == 0:
+            red = 0
+            green = 0
+            blue = 0
+            white = rgbw
+        
+    elif isinstance(rgbw, tuple):
+        le = len(rgbw)
+        red   = rgbw[0] if le > 2 else 0
+        green = rgbw[1] if le > 2 else 0
+        blue  = rgbw[2] if le > 2 else 0
+        white = rgbw[3] if le > 3 else 0
+        white = rgbw[0] if le == 1 else white
+
+    if leds_state == 0:
+        leds_state = 1 # flip
+        pantilthat.set_all(red, green, blue, white)
+    elif leds_state == 1:
+        leds_state = 0 # flip
+        pantilthat.clear()
+    pantilthat.show()
+    return '200'  # The gui.html with Flake expect a string, dict, tuple response instance
+
+
 no_btn = 0
 ctr_btn = 0x65 # = 101 dec -- Javascript keypress key-codes
 rt_btn = 0x27  # =  39 dec
@@ -104,96 +165,8 @@ def spi_rx():
                     direction = 'pan';
                     angle = 1;
                 api(direction,  angle)
-
-@app.route('/api/<direction>/<int:angle>')
-def api(direction, angle):
-    if angle < 0 or angle > 180:
-        return "{'error':'out of range'}"
-
-    angle -= 90
-
-    if direction == 'pan':
-        pantilthat.pan(angle)
-        return "{{'pan':{}}}".format(angle)
-
-    elif direction == 'tilt':
-        pantilthat.tilt(angle)
-        return "{{'tilt':{}}}".format(angle)
-
-def buildReadCommand(channel):
-    startBit = 0x01
-    singleEnded = 0x08
-
-    # Return python list of 3 bytes
-    #   Build a python list using [1, 2, 3]
-    #   First byte is the start bit
-    #   Second byte contains single ended along with channel #
-    #   3rd byte is 0
-    return []
-    
-def processAdcValue(result):
-    '''Take in result as array of three bytes. 
-       Return the two lowest bits of the 2nd byte and
-       all of the third byte'''
-    pass
-        
-@app.route('/readAdc/')
-def readAdc(channel):
-    if ((channel > 7) or (channel < 0)):
-        return -1
-    r = spi.xfer2(buildReadCommand(channel))
-    return processAdcValue(r)
-   
-"""
-if len(argv)<2 or len(argv)>5:
-    sys.stderr.write( "Syntax: {0} [<red> <green> <blue>] [<white>]\n".format(argv[0]) )
-    exit(1)
-"""
-
-"""
-   Function added by @Paulskpt to facilitate the 
-   control of the 8 LED RGBW strip
-   not initiated with external parameters as it was originally,
-   but called from within this script
-   If the middle button of the Adafruit rotary encoder is pressed,
-   all leds will lit (in white).
-"""
-@app.route('/leds_setall/<int:rgbw>')
-def leds_setall(rgbw):
-    global leds_state
-    pantilthat.light_mode(pantilthat.WS2812)
-    pantilthat.light_type(pantilthat.GRBW)
-    
-    if rgbw is None:
-        if leds_state == 0:
-            red = 0
-            green = 0
-            blue = 0
-            white = 255
-    elif isinstance(rgbw, int):
-        if leds_state == 0:
-            red = 0
-            green = 0
-            blue = 0
-            white = rgbw
-        
-    elif isinstance(rgbw, tuple):
-        le = len(rgbw)
-        red   = rgbw[0] if le > 2 else 0
-        green = rgbw[1] if le > 2 else 0
-        blue  = rgbw[2] if le > 2 else 0
-        white = rgbw[3] if le > 3 else 0
-        white = rgbw[0] if le == 1 else white
-
-    if leds_state == 0:
-        leds_state = 1 # flip
-        pantilthat.set_all(red, green, blue, white)
-    elif leds_state == 1:
-        leds_state = 0 # flip
-        pantilthat.clear()
-    pantilthat.show()
-    return '200'  # The gui.html with Flake expect a string, dict, tuple response instance
-
+                
+                
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=9595, debug=True)
     try:
