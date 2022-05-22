@@ -85,14 +85,7 @@ def leds_setall(rgbw):
             green = 0
             blue = 0
             white = rgbw
-        
-    elif isinstance(rgbw, tuple):
-        le = len(rgbw)
-        red   = rgbw[0] if le > 2 else 0
-        green = rgbw[1] if le > 2 else 0
-        blue  = rgbw[2] if le > 2 else 0
-        white = rgbw[3] if le > 3 else 0
-        white = rgbw[0] if le == 1 else white
+
 
     if leds_state == 0:
         leds_state = 1 # flip
