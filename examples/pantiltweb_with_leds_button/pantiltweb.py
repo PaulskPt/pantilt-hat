@@ -43,7 +43,7 @@ try:
     # spi.mode = 0
     # spi.dataLength = 3
 except IOError as exc:
-    print("Error opening /dev/spidev3.%d: %s" % (0, exc))
+    print("Error opening /dev/spidev0.%d: %s" % (0, exc))
     raise
 
 try:
