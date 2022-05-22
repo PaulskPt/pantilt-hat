@@ -15,14 +15,6 @@ mosi = 10
 miso = 9
 sclk = 11
 
-# Variables for the Debounce
-uPressed = 0
-upCompletePress = 0
-upReleased = 0
-downPressed = 0
-downReleased = 0
-downCompletePress = 0
-
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.cleanup()
@@ -34,14 +26,6 @@ GPIO.setup(miso, GPIO.OUT)
 # Initialize the spi
 try:
     spi = spidev.SpiDev()
-
-    # Open a connection to a specific bus and device (chip select pin)
-    #spi.open(bus, device) # moved to func spi_rx()
-
-    # set SPI speed and mode
-    # spi.max_speed_hz = 500000
-    # spi.mode = 0
-    # spi.dataLength = 3
 except IOError as exc:
     print("Error opening /dev/spidev0.%d: %s" % (0, exc))
     raise
@@ -116,55 +100,6 @@ def leds_setall(rgbw):
         pantilthat.clear()
     pantilthat.show()
     return '200'  # The gui.html with Flake expect a string, dict, tuple response instance
-
-
-no_btn = 0
-ctr_btn = 0x65 # = 101 dec -- Javascript keypress key-codes
-rt_btn = 0x27  # =  39 dec
-dn_btn = 0x28  # =  40 dec
-lt_btn = 0x25  # =  37 dec
-up_btn = 0x26  # =  38 dec
-btn_val = no_btn
-leds_state = 0
-
-@app.route('/spi_rx/')
-def spi_rx():
-    n = 3
-    rx_buf = bytes([0x0, 0x0, 0x0])
-    if GPIO.input(ce0):
-        # open spi port 0, device (ce0) 1
-        spi.open(0,0)
-        rx_buf = spi.readbytes(n) 
-        spi.close()
-        if isinstance(rx_buf, bytes):
-            # position is the value from the rotary.encoder connected to Feather M4 Express
-            position = rx_buf[1]
-            if rx_buf[0] == 1: # the position value is negative    
-                position *=-1 # make the value negative
-
-            if position >= 0:
-                direction = 1
-            else:
-                direction = 0
-                
-            button = rx_buf[2]
-            if button > no_btn:
-                if button == ctr_btn:
-                    leds_setall((50,))  # Toggle the LED RGBW strip
-                    return
-                if button == up_btn:
-                    direction = 'tilt';
-                    angle = 1;
-                elif button == dn_btn:
-                    direction = 'tilt';
-                    angle = -1;
-                elif button == rt_btn:
-                    direction = 'pan';
-                    angle = -1;
-                elif button == lt_btn:
-                    direction = 'pan';
-                    angle = 1;
-                api(direction,  angle)
                 
                 
 if __name__ == "__main__":
